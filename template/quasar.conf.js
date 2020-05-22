@@ -103,17 +103,20 @@ module.exports = {{#preset.typescript}}configure({{/preset.typescript}}function 
       tsCheckerConfig: { eslint: true }
     }{{else}}true{{/if}}{{else}}false{{/if}},
 
+    // https://quasar.dev/quasar-cli/cli-documentation/prefetch-feature
+    // preFetch: true
+
     // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-build
     build: {
       vueRouterMode: 'hash', // available values: 'hash', 'history'
 
       // rtl: false, // https://quasar.dev/options/rtl-support
+      // preloadChunks: true,
       // showProgress: false,
       // gzip: true,
       // analyze: true,
 
       // Options below are automatically set depending on the env, set them if you want to override
-      // preloadChunks: false,
       // extractCSS: false,
 
       // https://quasar.dev/quasar-cli/cli-documentation/handling-webpack
