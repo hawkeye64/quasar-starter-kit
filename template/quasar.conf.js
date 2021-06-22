@@ -4,38 +4,41 @@
  */
 
 // Configuration for your app
-// https://quasar.dev/quasar-cli/quasar-conf-js
+// https://v2.quasar.dev/quasar-cli/quasar-conf-js
+
 {{#preset.lint}}
 /* eslint-env node */
+{{#preset.typescript}}
+/* eslint-disable @typescript-eslint/no-var-requires */
+{{else}}
+const ESLintPlugin = require('eslint-webpack-plugin')
+{{/preset.typescript}}
 {{#if_eq lintConfig "airbnb"}}
 /* eslint func-names: 0 */
 /* eslint global-require: 0 */
 {{/if_eq}}
 {{/preset.lint}}
-{{#preset.typescript}}
-/* eslint-disable @typescript-eslint/no-var-requires */
-{{/preset.typescript}}
-{{#preset.typescript}}
 const { configure } = require('quasar/wrappers');
-{{/preset.typescript}}
 
-module.exports = {{#preset.typescript}}configure({{/preset.typescript}}function ({{#preset.lint}}{{#preset.typescript}}ctx{{else}}/* ctx */{{/preset.typescript}}{{else}}/* ctx */{{/preset.lint}}) {
+module.exports = configure(function (ctx) {
   return {
-    // https://quasar.dev/quasar-cli/supporting-ts
+    // https://v2.quasar.dev/quasar-cli/supporting-ts
     supportTS: {{#if preset.typescript}}{{#if preset.lint}}{
       tsCheckerConfig: {
-        eslint: true
+        eslint: {
+          enabled: true,
+          files: './src/**/*.{ts,tsx,js,jsx,vue}',
+        },
       }
     }{{else}}true{{/if}}{{else}}false{{/if}},
 
-    // https://quasar.dev/quasar-cli/prefetch-feature
+    // https://v2.quasar.dev/quasar-cli/prefetch-feature
     // preFetch: true,
 
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
-    // https://quasar.dev/quasar-cli/boot-files
+    // https://v2.quasar.dev/quasar-cli/boot-files
     boot: [
-      {{#if_eq typescriptConfig "composition"}}'composition-api',{{/if_eq}}
       {{#preset.i18n}}
       'i18n',
       {{/preset.i18n}}
@@ -44,9 +47,9 @@ module.exports = {{#preset.typescript}}configure({{/preset.typescript}}function 
       {{/preset.axios}}
     ],
 
-    // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
+    // https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
     css: [
-      'app.{{#if_eq css "none"}}css{{/if_eq}}{{#if_eq css "stylus"}}styl{{/if_eq}}{{#if_eq css "scss"}}scss{{/if_eq}}{{#if_eq css "sass"}}sass{{/if_eq}}'
+      'app.{{#if_eq css "none"}}css{{/if_eq}}{{#if_eq css "scss"}}scss{{/if_eq}}{{#if_eq css "sass"}}sass{{/if_eq}}'
     ],
 
     // https://github.com/quasarframework/quasar/tree/dev/extras
@@ -63,7 +66,7 @@ module.exports = {{#preset.typescript}}configure({{/preset.typescript}}function 
       'material-icons', // optional, you are not bound to it
     ],
 
-    // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-build
+    // Full list of options: https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-build
     build: {
       vueRouterMode: 'hash', // available values: 'hash', 'history'
 
@@ -74,7 +77,7 @@ module.exports = {{#preset.typescript}}configure({{/preset.typescript}}function 
       // Applies only if "transpile" is set to true.
       // transpileDependencies: [],
 
-      // rtl: false, // https://quasar.dev/options/rtl-support
+      // rtl: true, // https://v2.quasar.dev/options/rtl-support
       // preloadChunks: true,
       // showProgress: false,
       // gzip: true,
@@ -83,60 +86,91 @@ module.exports = {{#preset.typescript}}configure({{/preset.typescript}}function 
       // Options below are automatically set depending on the env, set them if you want to override
       // extractCSS: false,
 
-      // https://quasar.dev/quasar-cli/handling-webpack
-      extendWebpack (cfg) {
-        {{#preset.lint}}
-        {{#preset.typescript}}
-          // linting is slow in TS projects, we execute it only for production builds
-        if (ctx.prod) {
-        {{/preset.typescript}}cfg.module.rules.push({
-          enforce: 'pre',
-          test: /\.(js|vue)$/,
-          loader: 'eslint-loader',
-          exclude: /node_modules/
-        })
-        {{#preset.typescript}}
-        }
-        {{/preset.typescript}}
-        {{/preset.lint}}
-      },
+      // https://v2.quasar.dev/quasar-cli/handling-webpack
+      // "chain" is a webpack-chain object https://github.com/neutrinojs/webpack-chain
+      {{#preset.typescript}}chainWebpack (/* chain */) {
+        //
+      },{{else}}{{#preset.lint}}chainWebpack (chain) {
+        chain.plugin('eslint-webpack-plugin')
+          .use(ESLintPlugin, [{ extensions: [ 'js', 'vue' ] }])
+      },{{else}}chainWebpack (/* chain */) {
+        //
+      },{{/preset.lint}}{{/preset.typescript}}
     },
 
-    // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-devServer
+    // Full list of options: https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-devServer
     devServer: {
       https: false,
       port: 8080,
       open: true // opens browser window automatically
     },
 
-    // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-framework
+    // https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-framework
     framework: {
-      iconSet: 'material-icons', // Quasar icon set
-      lang: 'en-us', // Quasar language pack
       config: {},
 
-      // Possible values for "importStrategy":
-      // * 'auto' - (DEFAULT) Auto-import needed Quasar components & directives
-      // * 'all'  - Manually specify what to import
-      importStrategy: '{{importStrategy}}',
+      // iconSet: 'material-icons', // Quasar icon set
+      // lang: 'en-US', // Quasar language pack
+
+      // For special cases outside of where the auto-import stategy can have an impact
+      // (like functional components as one of the examples),
+      // you can manually specify Quasar components/directives to be available everywhere:
+      //
+      // components: [],
+      // directives: [],
 
       // Quasar plugins
       plugins: []
     },
 
     // animations: 'all', // --- includes all animations
-    // https://quasar.dev/options/animations
+    // https://v2.quasar.dev/options/animations
     animations: [],
 
-    // https://quasar.dev/quasar-cli/developing-ssr/configuring-ssr
+    // https://v2.quasar.dev/quasar-cli/developing-ssr/configuring-ssr
     ssr: {
-      pwa: false
+      pwa: false,
+
+      // manualStoreHydration: true,
+      // manualPostHydrationTrigger: true,
+
+      prodPort: 3000, // The default port that the production server should use
+                      // (gets superseded if process.env.PORT is specified at runtime)
+
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+        // Tell browser when a file from the server should expire from cache (in ms)
+
+      {{#preset.typescript}}chainWebpackWebserver (/* chain */) {
+        //
+      },{{else}}{{#preset.lint}}chainWebpackWebserver (chain) {
+        chain.plugin('eslint-webpack-plugin')
+          .use(ESLintPlugin, [{ extensions: [ 'js' ] }])
+      },{{else}}chainWebpackWebserver (/* chain */) {
+        //
+      },{{/preset.lint}}{{/preset.typescript}}
+
+      middlewares: [
+        ctx.prod ? 'compression' : '',
+        'render' // keep this as last one
+      ]
     },
 
-    // https://quasar.dev/quasar-cli/developing-pwa/configuring-pwa
+    // https://v2.quasar.dev/quasar-cli/developing-pwa/configuring-pwa
     pwa: {
       workboxPluginMode: 'GenerateSW', // 'GenerateSW' or 'InjectManifest'
       workboxOptions: {}, // only for GenerateSW
+
+      // for the custom service worker ONLY (/src-pwa/custom-service-worker.[js|ts])
+      // if using workbox in InjectManifest mode
+      {{#preset.typescript}}chainWebpackCustomSW (/* chain */) {
+        //
+      },{{else}}{{#preset.lint}}chainWebpackCustomSW (chain) {
+        chain.plugin('eslint-webpack-plugin')
+          .use(ESLintPlugin, [{ extensions: [ 'js' ] }])
+      },{{else}}chainWebpackCustomSW (/* chain */) {
+        //
+      },{{/preset.lint}}{{/preset.typescript}}
+
       manifest: {
         name: `{{ productName }}`,
         short_name: `{{ productName }}`,
@@ -175,17 +209,17 @@ module.exports = {{#preset.typescript}}configure({{/preset.typescript}}function 
       }
     },
 
-    // Full list of options: https://quasar.dev/quasar-cli/developing-cordova-apps/configuring-cordova
+    // Full list of options: https://v2.quasar.dev/quasar-cli/developing-cordova-apps/configuring-cordova
     cordova: {
       // noIosLegacyBuildFlag: true, // uncomment only if you know what you are doing
     },
 
-    // Full list of options: https://quasar.dev/quasar-cli/developing-capacitor-apps/configuring-capacitor
+    // Full list of options: https://v2.quasar.dev/quasar-cli/developing-capacitor-apps/configuring-capacitor
     capacitor: {
       hideSplashscreen: true
     },
 
-    // Full list of options: https://quasar.dev/quasar-cli/developing-electron-apps/configuring-electron
+    // Full list of options: https://v2.quasar.dev/quasar-cli/developing-electron-apps/configuring-electron
     electron: {
       bundler: 'packager', // 'packager' or 'builder'
 
@@ -208,13 +242,29 @@ module.exports = {{#preset.typescript}}configure({{/preset.typescript}}function 
         appId: '{{ name }}'
       },
 
-      // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
-      nodeIntegration: true,
+      // "chain" is a webpack-chain object https://github.com/neutrinojs/webpack-chain
+      {{#preset.typescript}}chainWebpack (/* chain */) {
+        // do something with the Electron main process Webpack cfg
+        // extendWebpackMain also available besides this chainWebpackMain
+      },{{else}}{{#preset.lint}}chainWebpackMain (chain) {
+        chain.plugin('eslint-webpack-plugin')
+          .use(ESLintPlugin, [{ extensions: [ 'js' ] }])
+      },{{else}}chainWebpackMain (/* chain */) {
+        // do something with the Electron main process Webpack cfg
+        // extendWebpackMain also available besides this chainWebpackMain
+      },{{/preset.lint}}{{/preset.typescript}}
 
-      extendWebpack (/* cfg */) {
-        // do something with Electron main process Webpack cfg
-        // chainWebpack also available besides this extendWebpack
-      }
+      // "chain" is a webpack-chain object https://github.com/neutrinojs/webpack-chain
+      {{#preset.typescript}}chainWebpackPreload (/* chain */) {
+        // do something with the Electron main process Webpack cfg
+        // extendWebpackPreload also available besides this chainWebpackPreload
+      },{{else}}{{#preset.lint}}chainWebpackPreload (chain) {
+        chain.plugin('eslint-webpack-plugin')
+          .use(ESLintPlugin, [{ extensions: [ 'js' ] }])
+      },{{else}}chainWebpackPreload (/* chain */) {
+        // do something with the Electron main process Webpack cfg
+        // extendWebpackPreload also available besides this chainWebpackPreload
+      },{{/preset.lint}}{{/preset.typescript}}
     }
   }
-}{{#preset.typescript}});{{/preset.typescript}}
+});
